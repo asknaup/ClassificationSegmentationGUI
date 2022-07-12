@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: "Lato", sans-serif;
+      background-color: #E6E6FA
+    }
+
+    .sidenav {
+      height: 100%;
+      width: 200px;
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      left: 0;
+      background-color: #111;
+      overflow-x: hidden;
+      padding-top: 20px;
+    }
+
+    .sidenav a {
+      padding: 6px 6px 6px 32px;
+      text-decoration: none;
+      font-size: 25px;
+      color: #818181;
+      display: block;
+    }
+
+    .sidenav a:hover {
+      color: #f1f1f1;
+    }
+
+    .main {
+      margin-left: 200px;
+      /* Same as the width of the sidenav */
+    }
+
+    @media screen and (max-height: 450px) {
+      .sidenav {
+        padding-top: 15px;
+      }
+
+      .sidenav a {
+        font-size: 18px;
+      }
+    }
+
+    table,
+    th,
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+    }
+
+    td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    th,
+    td {
+      padding: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="mySidenav" class="sidenav">
+    <a href="/">Home</a>
+    <a href="/classification">Classification</a>
+    <a href="/segmentation">Segmentation</a>
+  </div>
+
+  <div class="main">
+    <h1>Image Segmentation</h1>
+    <p>
+      After the neural network has processed the image, the segmentation
+      results will be updated below. Within the Image Metrics table, model
+      predicted Pore space, Organic Material, and Mineral will be broken down
+      according to pixels and displayed as an overall percentage of the image.
+    </p>
+    <h2>Image Metrics</h2>
+    <table>
+      <tr>
+        <th></th>
+        <th>Pixel Count</th>
+        <th>Percent</th>
+      </tr>
+      <tr>
+        <th style="text-align:right">Pore</th>
+        <td>100</td>
+        <td>5</td>
+      </tr>
+      <tr>
+        <th style="text-align:right">Organic</th>
+        <td>250</td>
+        <td>45</td>
+      </tr>
+      <tr>
+        <th style="text-align:right">Mineral</th>
+        <td>500</td>
+        <td>50</td>
+      </tr>
+    </table>
+    <br>
+    <br>
+    <img src="{{ img_data }}" id="img-upload" alt="img_data" class="img-upload" width="500" height="500"
+      title="Input Image">
+    <img src="/uploads/pred.png" width="500" height="500" title="Predicted Image">
+    <br>
+    <br>
+
+  </div>
+
+</html>

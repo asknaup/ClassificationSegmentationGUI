@@ -1,72 +1,70 @@
-import base64
+import imghdr
 from io import BytesIO
+from PIL import Image
+import base64
 import os
-
-from flask import Flask, flash, request, redirect, url_for
-from flask import request, escape, render_template, Response
-from flask import abort, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, abort
+from flask import send_from_directory, session
 from werkzeug.utils import secure_filename
-import urllib.request
-
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
-
-def allowed_files(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 app = Flask(__name__)
-
-# setting up application figs
-app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif', '.jpeg']
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.gif']
 app.config['UPLOAD_PATH'] = 'uploads'
-app.config['UPLOAD_FOLDER'] = 'static/uploads/'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.secret_key = "secret key"
 
-# Home page
-@app.route("/", methods=['GET','POST'])
-def home():
-    return render_template('home.html')
+app.secret_key = 'This is the secret key'
 
-@app.route("/", methods=['GET','POST'])
-def upload_image():
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)
+def validate_image(stream):
+    header = stream.read(512)
+    stream.seek(0)
+    format = imghdr.what(None, header)
+    if not format:
+        return None
+    return '.' + (format if format != 'jpeg' else 'jpg')
 
-    # get file name
-    file = request.files['file']
+@app.errorhandler(413)
+def too_large(e):
+    return "File is too large", 413
 
-    # if file name is empty then upload an image
-    if file.filename == '':
-        flash('No image selected for uploading')
-        return redirect(request.url)
-        
-    if file and allowed_files(file.filename):
-        filename = secure_filename(file.filename)
+@app.route('/')
+@app.route('/home')
+def index():
+    files = os.listdir(app.config['UPLOAD_PATH'])
+    if request.method == 'POST':
+        selectedValue = request.form['options']
+        return redirect(url_for('click', selectedValue=selectedValue))
+    return render_template('home.html', files=files)
 
-        file_ext = os.path.split(file.filename)[1]
-        if file_ext not in app.config['UPLOAD_EXTENSIONS']:
-            abort(400)
-        
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+@app.route('/', methods=['POST'])
+@app.route('/home', methods=['POST'])
+def upload_files():
+    uploaded_file = request.files['file']
+    filename = secure_filename(uploaded_file.filename)
+    if filename != '':
+        file_ext = os.path.splitext(filename)[1]
+        # cannot upload .tiff files
+        if file_ext not in app.config['UPLOAD_EXTENSIONS'] or \
+                file_ext != validate_image(uploaded_file.stream):
+            return "Invalid image", 400
+        uploaded_file.save(os.path.join(app.config['UPLOAD_PATH'], filename))
+        session['filename'] = filename
+    return '', 204
 
-        flash('Image successfully uploaded and displayed below')
+@app.route('/uploads/<filename>')
+def upload(filename):
+    return send_from_directory(app.config['UPLOAD_PATH'], filename)
 
-        return render_template('home.html', filename=filename)
-    else:
-        flash('Allowed image types are: png, jpg, jpeg, gif')
-        return redirect(request.url)
+@app.route('/classification')
+def classification():
+    filename = session.get('filename', None)
+    img_file_path = os.path.join(app.config['UPLOAD_PATH'], filename)
+    return render_template('classification.html', img_data=img_file_path)
 
-# load image and display on home page to preview
-@app.route('/display/<filename>')
-def display_image(filename):
-    # return send_from_directory(app.config['UPLOAD_PATH'], filename)
-	return redirect(url_for('static', filename='uploads/' + filename), code=301)
-
+@app.route('/segmentation')
+def segmentation():
+    filename = session.get('filename', None)
+    img_file_path = os.path.join(app.config['UPLOAD_PATH'], filename)
+    return render_template('segmentation.html', img_data=img_file_path)
 
 if __name__ == "__main__":
     app.run(host='localhost', port=5000, debug=True)
