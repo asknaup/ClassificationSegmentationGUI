@@ -1,0 +1,20 @@
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="container">
+    <h1>Budget...</h1>
+    <br/>
+    <form action="/budget" method="POST">
+        <input type="text" placeholder="Category" name="category">
+        <input type="number" step="0.01" placeholder="Price" name="price">
+        <input type="date" placeholder="Date" name="date">
+        <input type="text" placeholder="Notes" name="notes">
+        <input type="submit" value="Add Line" class="btn btn-secondary">
+    </form>
+    <br/><br/>
+    {% for item in items %}
+        <h4>
+            {{ item.price }}, {{ item.category }}, {{ item.date_created }}, {{ item.notes }}
+        </h4>
+    {% endfor %}
+</div>
+{% endblock %}
